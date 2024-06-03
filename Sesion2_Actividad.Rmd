@@ -1,0 +1,287 @@
+---
+title: "Visualización de datos COVID19 usando R"
+author: "Angelica Cortes"
+date: "2024-06-24"
+output:
+    html_document:
+    slidy_presentation: default
+    ioslides_presentation:
+      widescreen: true
+---
+
+
+
+```{r setup, include=FALSE}
+
+#Establece el chunk 
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+# Cargar las bibliotecas necesarias
+library(coronavirus)
+library(tidyverse)
+
+# Cargar el conjunto de datos de COVID-19 del paquete 'coronavirus'
+casos <- coronavirus::coronavirus
+
+```
+
+## Antecedentes
+
+
+La Organización Mundial de la Salud (OMS) tuvo noticia por primera vez de la existencia de este virus 
+el 31 de diciembre de 2019, al ser informada de un grupo de casos de “neumonía vírica” que se habían 
+declarado en Wuhan (República Popular China). La epidemia de Covid-19 fue declarada por la OMS una
+emergencia de salud pública de preocupación internacional
+el 30 de enero de 2020. 
+
+La enfermedad por coronavirus (Covid-19) es una enfermedad infecciosa causada por el virus SARS-CoV-2.
+Los coronavirus son una amplia familia de virus que pueden causar diversas afecciones. Por su parte,
+el nuevo coronavirus, que fue denominado Covid-19, y causante de la pandemia actual, es una nueva 
+cepa de esta familia no identificada previamente.
+
+
+![Imagen de coronavirus](imgs/CORONA.jpg){width="40%"}
+
+## Materiales y métodos
+El Centro de Ciencia e Ingeniería de Sistemas (CSSE) de la Universidad Johns Hopkins proporciona un
+conjunto de datos de COVID-19. Es por ello que,se  utilizaron  sus datos para nuestro análisis. Puedes
+consultar el github del autor [repositorio de datos de acceso público](https://github.com/RamiKrispin/coronavirus).
+También se puede probar con ??coronavirus en RStudio.
+
+### Ecuaciones usadas para medir el impacto de una enfermedad.
+
+La Tasa de Incidencia se calcula dividiendo el número de nuevos casos por la población y multiplicando por 100,000:
+
+* $TasaDeIncidencia = NuevosCasos / Población \times 100,000$
+
+La Tasa de Mortalidad se obtiene dividiendo el número de defunciones por la población y también multiplicando por 100,000: 
+
+* $TasaDeMortalidad = Defunciones / Población \times 100,000$
+
+
+
+### Resultados
+A continuación, se observan cada una de las gráficas con los diferentes resultados obtenidos. 
+
+### Nuevos casos confirmados en el tiempo (línea de tiempo sobre casos a nivel mundial).
+El índice de casos confirmados por coronavirus a nivel mundial aumentó de forma creciente a principios del año 2022, que se propagó rápidamente debido a su forma de transmisión . 
+
+```{r confimados_mundial}
+interactivo <- casos |> 
+  # filtra tipo de dato que se quiere ver
+  filter(type == "confirmed") |> 
+  # agrupar con dplyr para poder resumir los datos
+  group_by(date) |> 
+  summarise(casos = sum(cases, na.rm = TRUE)) |> 
+  # graficar con ggplot
+  ggplot(aes(x = date, y = casos))+
+  geom_line( color = "#4c7817")+
+  labs(title = "Nuevos casos confirmados a nivel mundial",
+       x = "Fecha",
+       y = "# de nuevos casos")+
+   theme_minimal()+
+    theme(panel.background = element_rect(fill = "#fffaff", color = NA),  # Cambiar el fondo del panel
+        plot.background = element_rect(fill = "#ffffdf", color = NA))  # Cambiar el fondo de la gráfica
+
+# Visualizar la gráfica interactiva 
+plotly::ggplotly(interactivo)
+
+```
+
+### Acumulativo de nuevos casos confirmados en el tiempo.
+Se observa el acumulativo de nuevos casos confirmados, mostrando un incremento constante desde el año 2020 hasta el 2023. Este periodo abarca el inicio de la pandemia, la aparición de varias olas de contagios impulsadas por diferentes variantes del virus, y los esfuerzos globales de vacunación.
+```{r casos_confirmados_acumulado}
+# guardar los datos de nuevos casos
+temp1 <- casos |> 
+  # filtrar tipo de datos que se quieren ver
+  filter(type == "confirmed") |> 
+  # agrupar para resumir
+  group_by(date) |> 
+  summarise(casos = sum(cases, na.rm = TRUE))
+
+# agregar columna de datos acumulativos
+temp1$acumulado = cumsum(temp1$casos)
+
+# graficar
+ acomuladostiempo <- temp1 |> 
+  ggplot(aes(x = date, y = acumulado))+
+  geom_line( color = "#8ae8b9")+
+  labs(title = "Acumulativo de nuevos casos confirmados",
+       x = "Fecha",
+       y = "# de nuevos casos")+
+   theme_minimal()+
+    theme(panel.background = element_rect(fill = "#fffaff", color = NA),  # Cambiar el fondo del panel
+        plot.background = element_rect(fill = "#ffffdf", color = NA))  # Cambiar el fondo de la gráfica
+
+# Visualizar la gráfica interactiva 
+plotly::ggplotly(acomuladostiempo)
+
+```
+
+### Defunciones reportadas a nivel mundial.
+El mayor índice de defunciones declaradas a nivel mundial fue en el año 2023, superando las defunciones de los años anteriores. Este trágico aumento se debió a varios factores, incluyendo la saturación de los sistemas de salud en muchos países.
+
+```{r defunciones_mundial}
+visualizar<- casos |> 
+  # filtra tipo de dato que se quiere ver
+  filter(type == "death") |> 
+  # agrupar con dplyr para poder resumir los datos
+  group_by(date) |> 
+  summarise(casos = sum(cases, na.rm = TRUE)) |> 
+  # graficar con ggplot
+  ggplot(aes(x = date, y = casos))+
+  geom_line( color = "#30426d")+
+  labs(title = "Defunciones a nivel mundial",
+       x = "Fecha",
+       y = "# de defunciones")+
+     theme_minimal()+
+    theme(panel.background = element_rect(fill = "#fffaff", color = NA),  # Cambiar el fondo del panel
+        plot.background = element_rect(fill = "#ffffdf", color = NA))  # Cambiar el fondo de la gráfica
+
+
+# Visualizar la gráfica interactiva 
+plotly::ggplotly(visualizar)
+```
+
+
+### Defunciones acumuladas a nivel mundial
+Se puede observar las defunciones acumuladas hasta el año 2023, reflejando el impacto de la pandemia a lo largo de los años.
+
+```{r defunciones_acumuladas_mundial}
+temp1 <- casos |> 
+  # filtrar tipo de datos que se quieren ver
+  filter(type == "death") |> 
+  # agrupar para resumir
+  group_by(date) |> 
+  summarise(casos = sum(cases, na.rm = TRUE))
+
+# agregar columna de datos acumulativos
+temp1$acumulado = cumsum(temp1$casos)
+
+# graficar
+defacum<- temp1 |> 
+  ggplot(aes(x = date, y = acumulado))+
+  geom_line( color = "#0f3b45")+
+  labs(title = "Acumulativo de defunciones",
+       x = "Fecha",
+       y = "# de defunciones")+
+     theme_minimal()+
+    theme(panel.background = element_rect(fill = "#fffaff", color = NA),  # Cambiar el fondo del panel
+        plot.background = element_rect(fill = "#ffffdf", color = NA))  # Cambiar el fondo de la gráfica
+
+# Visualizar la gráfica interactiva 
+plotly::ggplotly(defacum)
+```
+
+### Casos confirmados y defunciones en México (línea de tiempo sobre casos confirmados en México).
+
+```{r casos_mexico}
+temp_mx <- casos |> 
+  # filtrar tipo de datos que se quieren ver
+  filter(type != "recovery") |> 
+  filter(country == "Mexico") |> 
+  # agrupar para resumir
+  group_by(date, type) |> 
+  summarise(casos = sum(cases, na.rm = TRUE)) |> 
+  pivot_wider(names_from = "type", values_from = "casos")
+
+# agregar columna de datos acumulativos
+
+temp_mx$acumulado_confirmado = cumsum(temp_mx$confirmed)
+temp_mx$acumulado_muerte = cumsum(temp_mx$death)
+
+# graficar
+agregarV<- temp_mx |> 
+  pivot_longer(cols = c(confirmed:acumulado_muerte),
+               names_to = "Variable", values_to = "Cuenta") |> 
+  filter(Variable == "confirmed" | Variable == "death") |> 
+  ggplot(aes(x = date, y = Cuenta, color = Variable))+
+  geom_line(color = "#655245")+
+  labs(title = "Casos confirmados y defunciones en México",
+       x = "Fecha",
+       y = "# de casos")+
+     theme_minimal()+
+    theme(panel.background = element_rect(fill = "#fffaff", color = NA),  # Cambiar el fondo del panel
+        plot.background = element_rect(fill = "#ffffdf", color = NA))  # Cambiar el fondo de la gráfica
+
+
+# Visualizar la gráfica interactiva 
+plotly::ggplotly(agregarV)
+```
+
+
+
+### Tasa de incidencia a nivel mundial por país, por año.
+
+```{r tasa_incidencia_mundial}
+T_Incidencia <- casos |> 
+  # filtrar tipo de datos 
+  filter(type == "confirmed") |> 
+  # agrupar para después resumir los datos
+  group_by(date, country) |> 
+  summarise(casos = sum(cases, na.rm = TRUE),
+            poblacion = sum(population, na.rm = TRUE)) |> 
+  # agregar columna de año
+  mutate(año = format(date, "%Y")) |> 
+  # deshacer los grupos anteriores para agrupar pero ahora por año
+  ungroup() |> 
+  group_by(año, country) |> 
+  summarise(casos = sum(casos, na.rm = TRUE),
+            poblacion = mean(poblacion, na.rm = TRUE)) |> 
+  # filtrar países con población 0, para evitar NaN e Infinitos
+  filter(poblacion > 0) |> 
+  # calcular tasa de incidencia
+  mutate(tasa_incidencia = casos / poblacion * 100000)
+
+DT::datatable(T_Incidencia)
+```
+
+### Tasa de mortalidad a nivel mundial por país
+
+
+```{r tasa_mortalidad_mundial}
+T_Mortalidad <- casos |> 
+  # filtrar tipo de datos 
+  filter(type == "death") |> 
+  # agrupar para después resumir los datos
+  group_by(date, country) |> 
+  summarise(casos = sum(cases, na.rm = TRUE),
+            poblacion = sum(population, na.rm = TRUE)) |> 
+  # agregar columna de año
+  mutate(año = format(date, "%Y")) |> 
+  # deshacer los grupos anteriores para agrupar pero ahora por año
+  ungroup() |> 
+  group_by(año, country) |> 
+  summarise(casos = sum(casos, na.rm = TRUE),
+            poblacion = mean(poblacion, na.rm = TRUE)) |> 
+  # filtrar países con población 0, para evitar NaN e Infinitos
+  filter(poblacion > 0) |> 
+  # calcular tasa de mortalidad
+  mutate(tasa_mortalidad = casos / poblacion * 100000)
+
+DT::datatable(T_Mortalidad)
+```
+
+### Indicar valores de tasa de incidencia para México
+
+```{r tasa_incidencia_mexico}
+# filtrar información a nivel país
+ Incidencia <- T_Incidencia |> 
+  filter(country == "Mexico")
+DT::datatable(Incidencia)
+```
+
+### Indicar valores de tasa de mortalidad para México
+```{r tasa_mortalidad_mexico}
+# filtrar información a nivel país
+ Mortalidad <- T_Mortalidad |> 
+  filter(country == "Mexico")
+DT::datatable(Mortalidad)
+```
+
+
+### Conclusión
+
+La pandemia de Covid-19 ha tenido un impacto imprescindible y duradero en la salud pública a nivel mundial, reflejado en el incremento constante de casos confirmados y defunciones acumuladas desde el 2020 hasta el 2023. A lo largo de estos años, la aparición de nuevas variantes del virus, ha originado desafíos significativos para los sistemas de salud y ha impulsado picos de contagios y defunciones.
+
+### Bibliografía
+Este archivo es una traducción del trabajo realizado por RamiKrispin para el estudio del COVID-19. [El trabajo original se puede revisar aquí]([https://github.com/RamiKrispin/coronavirus])
